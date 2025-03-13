@@ -1,88 +1,124 @@
 import React, { useEffect, useState } from "react";
 import { Spinner } from "react-bootstrap";
-import "./Homepage.css";
 import axios from "axios";
+import "./Homepage.css";
 import HomepageComponent from "../components/HomepageComponent";
 import DateComponent from "../components/DateComponent";
 
-export default function Homepage() {
-  const apiKey = "560c88d5e444dcf191449b1950464a9e";
-  const [weather, setWeather] = useState(null);
+const API_KEY = process.env.REACT_APP_ENV_API_KEY;
+const NOMINATIM_URL = process.env.REACT_APP_ENV_NOMINATIM_URL;
+const WEATHER_URL = process.env.REACT_APP_ENV_WEATHER_URL;
 
-  function getLocation() {
-    navigator.geolocation.getCurrentPosition((position) =>
-      getWeatherData(position.coords.latitude, position.coords.longitude)
+// Utility function to format date
+const formatDateTime = (timestamp) => {
+  const a = new Date(timestamp * 1000);
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  return `${days[a.getDay()]}, ${a.getDate()} ${
+    months[a.getMonth()]
+  } ${a.getFullYear()} ${a.getHours()}:${String(a.getMinutes()).padStart(
+    2,
+    "0"
+  )}`;
+};
+
+// Fetch city details based on latitude and longitude
+const fetchCityDetails = async (lat, lon) => {
+  try {
+    const response = await fetch(
+      `${NOMINATIM_URL}?format=json&lat=${lat}&lon=${lon}`
     );
+    const data = await response.json();
+    return { ...data.address, lat, lon };
+  } catch (error) {
+    console.error("Error fetching city details:", error);
+    return null;
   }
+};
 
-  function getWeatherData(lat, long) {
-    axios
-      .get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${long}&units=metric&appid=${apiKey}`
-      )
-      .then((res) => {
-        let a = new Date(res.data.dt * 1000);
-        let months = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
-        ];
-        let days = [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday"
-        ];
-        let year = a.getFullYear();
-        let day = days[a.getDay()];
-        let month = months[a.getMonth()];
-        let date = a.getDate();
-        let hour = a.getHours();
-        let min = a.getMinutes();
-        let time =
-          day + ", " + date + " " + month + " " + year + " " + hour + ":" + min;
+// Fetch weather data from OpenWeatherMap
+const fetchWeatherData = async (lat, lon) => {
+  try {
+    const response = await axios.get(
+      `${WEATHER_URL}?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
+    );
+    const data = response.data;
 
-        let data = {
-          daytime: time,
-          main: res.data.weather[0].main,
-          description: res.data.weather[0].description,
-          icon: res.data.weather[0].icon,
-          temp: res.data.main.temp,
-          feels_like: res.data.main.feels_like,
-          minTemp: res.data.main.temp_min,
-          maxTemp: res.data.main.temp_max,
-          pressure: res.data.main.pressure,
-          humidity: res.data.main.humidity,
-          visibility: res.data.visibility,
-          timezone: res.data.timezone,
-          country: res.data.sys.country,
-          state: res.data.name,
-        };
-        setWeather(data);
-      })
-
-      .catch((err) => {
-        console.log(err);
-      });
+    return {
+      daytime: formatDateTime(data.dt),
+      main: data.weather[0].main,
+      description: data.weather[0].description,
+      icon: data.weather[0].icon,
+      temp: data.main.temp,
+      feels_like: data.main.feels_like,
+      minTemp: data.main.temp_min,
+      maxTemp: data.main.temp_max,
+      pressure: data.main.pressure,
+      humidity: data.main.humidity,
+      visibility: data.visibility,
+      timezone: data.timezone,
+      country: data.sys.country,
+    };
+  } catch (error) {
+    console.error("Error fetching weather data:", error);
+    return null;
   }
+};
+
+export default function Homepage() {
+  const [weather, setWeather] = useState(null);
+  const [addressDetails, setAddressDetails] = useState(null);
 
   useEffect(() => {
+    const getLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          console.log("Accuracy:", position.coords.accuracy, "meters");
+          const { latitude, longitude } = position.coords;
+
+          const cityData = await fetchCityDetails(latitude, longitude);
+          const weatherData = await fetchWeatherData(latitude, longitude);
+
+          if (cityData) setAddressDetails(cityData);
+          if (weatherData) setWeather(weatherData);
+        },
+        (error) => {
+          console.error("Error getting location:", error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 60000,
+          maximumAge: 0,
+        }
+      );
+    };
+
     getLocation();
   }, []);
 
-  if (weather === null) {
+  if (!weather) {
     return (
       <div className="isLoading">
         <Spinner animation="border" role="status">
@@ -95,13 +131,11 @@ export default function Homepage() {
   return (
     <>
       <div className="daytime">
-        <DateComponent
-          daytime={weather.daytime}
-        />
+        <DateComponent daytime={weather.daytime} />
       </div>
       <div className="Homepage">
         <HomepageComponent
-          state={weather.state}
+          state={addressDetails?.suburb || "Unknown"}
           country={weather.country}
           temp={weather.temp}
           icon={weather.icon}
