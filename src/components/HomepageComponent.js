@@ -31,10 +31,10 @@ export default function HomepageComponent(props) {
           <span className="degree">&#8451;</span>
         </span>
       </div>
-      <span className="minMaxTemperature">
-        <Table striped bordered hover>
+      <div className="minMaxTemperature">
+        <Table bgcolor="blue" bordered hover striped>
           <thead>
-            <tr className="tableHeader">
+            <tr>
               <th>Visibility</th>
               <th>Humidity</th>
               <th>Feels Like</th>
@@ -47,13 +47,13 @@ export default function HomepageComponent(props) {
               <td className="tableValue">{props.humidity}&#37;</td>
               <td className="tableValue">
                 {Math.round(props.feels_like)}
-                <span className="degree">&#8451;</span>
+                <span className="boxDegree">&#8451;</span>
               </td>
               <td className="tableValue">{props.pressure} hPa</td>
             </tr>
           </tbody>
         </Table>
-      </span>
+      </div>
     </div>
   );
 }
