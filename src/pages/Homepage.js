@@ -118,7 +118,7 @@ export default function Homepage() {
     getLocation();
   }, []);
 
-  if (!weather) {
+  if (weather === null && addressDetails === null) {
     return (
       <div className="isLoading">
         <Spinner animation="border" role="status">
@@ -131,21 +131,21 @@ export default function Homepage() {
   return (
     <>
       <div className="daytime">
-        <DateComponent daytime={weather.daytime} />
+        <DateComponent daytime={weather?.daytime} />
       </div>
       <div className="Homepage">
         <HomepageComponent
           state={addressDetails?.suburb || "Unknown"}
-          country={weather.country}
-          temp={weather.temp}
-          icon={weather.icon}
-          description={weather.description}
-          visibility={weather.visibility}
-          pressure={weather.pressure}
-          feels_like={weather.feels_like}
-          humidity={weather.humidity}
-          maxTemp={weather.maxTemp}
-          minTemp={weather.minTemp}
+          country={weather?.country}
+          temp={weather?.temp}
+          icon={weather?.icon}
+          description={weather?.description}
+          visibility={weather?.visibility}
+          pressure={weather?.pressure}
+          feels_like={weather?.feels_like}
+          humidity={weather?.humidity}
+          maxTemp={weather?.maxTemp}
+          minTemp={weather?.minTemp}
         />
       </div>
     </>
