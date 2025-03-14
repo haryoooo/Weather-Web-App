@@ -12,6 +12,5 @@ This project is simple weather App that display information about current weathe
 - Netlify
 
 ### `Live On`
-Sites: https://loving-snyder-9979a5.netlify.app/
-
+Sites: https://wonderful-crisp-0304c6.netlify.app/
 
